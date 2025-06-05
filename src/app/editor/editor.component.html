@@ -3,9 +3,10 @@
     <button (click)="editor.runCommand('core:redo')">↪️ Rehacer</button>
     <button (click)="guardarContenido()">💾 Guardar</button>
     <button (click)="abrirModalGemini()">🖼️ Generar desde Imagen</button>
-    <button (click)="abrirModalSql()">🛠️ Generar desde SQL</button> 
-    <button (click)="abrirModalExportar()">📦 Exportar Angular</button>
+    <!--<button (click)="abrirModalSql()">🛠️ Generar desde SQL</button>--> 
+    <!--<button (click)="abrirModalExportar()">📦 Exportar Angular</button>--> 
     <button (click)="abrirModalXMI()">🗂️ Subir Diagrama XMI</button>
+    <button (click)="abrirModalPrompt()">💡 Escribir Prompt</button>
 </div>
 
 <!-- Resto igual -->
@@ -53,4 +54,22 @@
         <div *ngIf="cargandoGeminiXMI">⏳ Procesando XMI con Gemini...</div>
         <div *ngIf="mensajeGemini">{{ mensajeGemini }}</div>
     </div>
+</div>
+
+<div class="modal-prompt" *ngIf="mostrarPrompt">
+  <div class="modal-content">
+    <h3>🧠 Escribir Prompt para la IA</h3>
+
+    <!-- Mostrar "Cargando..." mientras se espera respuesta -->
+    <div *ngIf="cargando" style="margin-bottom: 10px; color: #3498db; font-weight: bold;">
+      ⏳ Cargando respuesta de la IA...
+    </div>
+
+    <textarea [(ngModel)]="prompt" rows="6" placeholder="Escribe tu idea..." [disabled]="cargando"></textarea>
+
+    <div class="modal-actions">
+      <button (click)="enviarPrompt()" [disabled]="cargando">Enviar</button>
+      <button (click)="cerrarModalPrompt()" [disabled]="cargando">Cancelar</button>
+    </div>
+  </div>
 </div>

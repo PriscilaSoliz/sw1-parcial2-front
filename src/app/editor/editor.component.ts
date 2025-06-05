@@ -10,13 +10,15 @@ import { SqlGenerateComponent } from '../components/sql-generate/sql-generate.co
 import { NavbarComponent } from '../components/navbar/navbar.component';
 import { loadBlocks } from './blocks';
 import { GeminiService } from '../services/gemini.service';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-editor',
   standalone: true,
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.css'],
-  imports: [CommonModule, ChatGeminiComponent, SqlGenerateComponent, NavbarComponent],
+  imports: [CommonModule, ChatGeminiComponent, SqlGenerateComponent, NavbarComponent, FormsModule],
 })
 export class EditorComponent implements AfterViewInit {
   @ViewChild(ChatGeminiComponent) chatGeminiComponent!: ChatGeminiComponent;
@@ -38,7 +40,8 @@ export class EditorComponent implements AfterViewInit {
     private route: ActivatedRoute,
     private salaService: SalaService,
     private webSocketService: WebSocketService,
-    private geminiService: GeminiService
+    private geminiService: GeminiService,
+    private http: HttpClient
   ) {}
 
   ngAfterViewInit(): void {
@@ -367,4 +370,71 @@ export class EditorComponent implements AfterViewInit {
   cerrarModalXMI() {
     this.modalXmiAbierto = false;
   }
+
+  //PROMT
+  cargando = false;
+  mostrarPrompt = false;
+  prompt = '';
+
+  abrirModalPrompt() {
+    this.mostrarPrompt = true;
+  }
+
+  enviarPrompt() {
+    if (!this.prompt.trim()) return;
+
+    this.cargando = true;
+
+    const API_KEY = 'AIzaSyDSZmAJIE17Ei-QATNIPXHyFM3Rm9RSDBE';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+
+    const body = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `
+Eres un generador de interfaces visuales solo para vistas moviles. A partir de la siguiente petición en lenguaje natural:
+
+"${this.prompt}"
+
+Genera el HTML estructurado listo para GrapesJS (sin <html> ni <body>) y el CSS dentro de una etiqueta <style>. Importante:
+- Los formularios deben usar <form>.
+- Los botones deben ser <button type="submit">Guardar</button>.
+- Cada <input> debe tener un atributo name correspondiente.
+- No expliques nada, solo responde con el código HTML y CSS limpio directamente.
+`
+            }
+          ]
+        }
+      ]
+    };
+
+    this.http.post<any>(url, body).subscribe({
+      next: (res) => {
+        const respuesta = res?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const editor = (window as any).grapesEditorInstance;
+
+        if (editor) {
+          editor.setComponents(''); // Limpia el lienzo
+          editor.addComponents(respuesta); // Inserta el resultado
+        } else {
+          console.error('Editor GrapesJS no encontrado.');
+        }
+
+        this.cargando = false;
+        this.cerrarModalPrompt();
+      },
+      error: (err) => {
+        console.error('Error al enviar prompt a Gemini:', err);
+        this.cargando = false;
+      }
+    });
+  }
+
+  cerrarModalPrompt() {
+    this.mostrarPrompt = false;
+    this.prompt = '';
+  }
+
 }
