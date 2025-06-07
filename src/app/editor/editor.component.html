@@ -8,7 +8,7 @@
     <button (click)="abrirModalXMI()">🗂️ Subir Diagrama XMI</button>
     <button (click)="abrirModalPrompt()">💡 Escribir Prompt</button>
     <!-- 📦 Botón para exportar el proyecto Flutter completo -->
-    <button (click)="exportarProyectoFlutter()">📦 Exportar Proyecto Flutter</button> <!--puse el botton de exportar flutter--> 
+    <button (click)="exportarFlutterDesdeEditor()">📦 Exportar Proyecto Flutter</button> <!--puse el botton de exportar flutter--> 
 </div>
 
 <!-- Resto igual -->
@@ -45,6 +45,31 @@
         </div>
     </div>
 </div> 
+
+<!-- ⇨ MODIFICADO: modal de exportación ahora muestra Dart -->
+<div class="modal-exportar" *ngIf="modalExportarAbierto">
+  <div class="modal-content-exportar">
+    <h2>📦 Código Flutter Generado</h2>
+    <textarea readonly rows="15" style="width:100%">{{ dartExportado }}</textarea>
+    <div class="botones-modal">
+      <button (click)="descargarArchivos()">⬇️ Descargar mi_widget.dart</button>
+      <button (click)="cerrarModalExportar()">❌ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ⇨ MODIFICADO: modal de exportación ahora muestra Dart -->
+<div class="modal-exportar" *ngIf="modalExportarAbierto">
+  <div class="modal-content-exportar">
+    <h2>📦 Código Flutter Generado</h2>
+    <textarea readonly rows="15" style="width:100%">{{ dartExportado }}</textarea>
+    <div class="botones-modal">
+      <button (click)="descargarArchivos()">⬇️ Descargar mi_widget.dart</button>
+      <button (click)="cerrarModalExportar()">❌ Cerrar</button>
+    </div>
+  </div>
+</div>
 
 <div class="xmi-modal-backdrop" *ngIf="modalXmiAbierto">
     <div class="xmi-modal">

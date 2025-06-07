@@ -32,8 +32,10 @@ export class EditorComponent implements AfterViewInit {
   htmlExportado = '';
   cssExportado = '';
   tsExportado = '';
+   // ⇨ DONDE SE VA A GUARDAR EL DART COMPLETO
   dartExportado = '';
   modalExportarAbierto = false;
+
   modalXmiAbierto = false;
   cargandoGeminiXMI = false;
   mensajeGemini = '';
@@ -42,7 +44,7 @@ export class EditorComponent implements AfterViewInit {
   cargandoImagen = false;
   mensajeImagen = '';
 
-  
+  promptText='';
 
   // ⇨ VARIABLE USADA EN EL HTML
 cargando = false;
@@ -241,140 +243,98 @@ cargando = false;
   /* -------- 🛠 Exportar a Flutter --------- */
 
   abrirModalExportar() {
-  const codigoFlutter = this.generarFlutterDesdeEditor(); // función que crea widgets desde HTML
-
-  const nombreComponente = 'mi_widget';
-  this.dartExportado = `import 'package:flutter/material.dart';
-
-    class ${this.pascalCase(nombreComponente)} extends StatelessWidget {
-      @override
-      Widget build(BuildContext context) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Interfaz Generada'),
-          ),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                ${codigoFlutter}
-              ],
-            ),
-          ),
-        );
-      }
-    }
-  `.trim();
-
-  this.modalExportarAbierto = true;
-}
+    this.modalExportarAbierto = true;
+  }
 
   cerrarModalExportar() {
     this.modalExportarAbierto = false;
   }
 
- descargarArchivos() {
-  const nombreComponente = 'mi_widget';
-  const dartBlob = new Blob([this.dartExportado], { type: 'text/plain' });
-  const dartUrl = URL.createObjectURL(dartBlob);
-  this.descargarArchivo(dartUrl, `${nombreComponente}.dart`);
+descargarArchivos() {
+  // 1) Comprobar que hay algo que descargar
+  if (!this.dartExportado || !this.dartExportado.trim()) {
+    console.warn('Nada para descargar: dartExportado está vacío');
+    return;
+  }
+
+  const nombreComponente = 'mi_widget.dart';
+  const blob = new Blob([this.dartExportado], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  // 2) Crear elemento <a>, añadirlo al body, disparar click y luego limpiarlo
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nombreComponente;
+  document.body.appendChild(link);   // Necesario en algunos navegadores
+  link.click();
+  document.body.removeChild(link);   // Limpieza
+
+  // 3) Liberar URL
+  URL.revokeObjectURL(url);
 }
 
 
-  private descargarArchivo(url: string, nombre: string) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = nombre;
-    a.click();
-    URL.revokeObjectURL(url);
+
+ /* ====== EXPORTACIÓN A ZIP DE PROYECTO FLUTTER ===// ⇨ NUEVO: genera Flutter desde el HTML actual del editor=== */
+
+  /** 1) Desde el HTML actual del editor */
+  exportarFlutterDesdeEditor() {
+    this.cargando = true;
+    const html = this.editor.getHtml();
+    this.geminiService.generarFlutterDesdeHtml(html)
+      .then(code => this.generarYDescargarZip(code))
+      .catch(err => console.error('Error generando Flutter desde HTML', err))
+      .finally(() => this.cargando = false);
   }
 
-  private pascalCase(nombre: string): string {
-    return nombre
-      .split('-')
-      .map(p => p.charAt(0).toUpperCase() + p.slice(1))
-      .join('');
+  /** 2) Desde una imagen cargada */
+  onImagenChange(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    this.cargandoImagen = true;
+    const reader = new FileReader();
+    reader.onload = async (e: any) => {
+      const base64 = e.target.result.split(',')[1];
+      try {
+        const code = await this.geminiService.generarFlutterDesdeImagen(base64);
+        this.generarYDescargarZip(code);
+      } catch (err) {
+        console.error('Error generando Flutter desde imagen', err);
+      } finally {
+        this.cargandoImagen = false;
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
-private generarFlutterDesdeEditor(): string {
-  let html = this.editor.getHtml();
+  /** 3) Desde un prompt de texto */
+  exportarFlutterDesdePrompt() {
+    if (!this.promptText.trim()) return;
+    this.cargando = true;
+    this.geminiService.generarFlutterDesdePrompt(this.promptText)
+      .then(code => this.generarYDescargarZip(code))
+      .catch(err => console.error('Error generando Flutter desde prompt', err))
+      .finally(() => this.cargando = false);
+  }
 
-  // 1) Quitar fences Markdown
-  html = html
-    .replace(/```html\s*/gi, '')
-    .replace(/```/g, '');
+  /**
+   * Empaqueta en ZIP un proyecto Flutter mínimo con el código Dart generado,
+   * dispara la descarga y limpia el blob.
+   */
+  private generarYDescargarZip(dartCode: string) {
+    const zip = new JSZip();
 
-  // 2) Quitar <style>…</style> completo
-  html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-
-  // 4) Decodificar entidades básicas
-  html = html.replace(/&nbsp;/gi, ' ').trim();
-
-// 5) Ahora cada línea de texto (separado por tags) la convertimos a Widgets
-  //    Usaremos comillas dobles en Dart para evitar conflictos con apostrofes.
-  return html
-    // Encabezados
-    .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi,
-             `Text("$1", style: TextStyle(fontSize: 24)),`)
-    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi,
-             `Text("$1", style: TextStyle(fontSize: 20)),`)
-    // Párrafos y labels
-    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi,
-             `Text("$1"),`)
-    .replace(/<label[^>]*>([\s\S]*?)<\/label>/gi,
-             `Text("$1"),`)
-    // Botones
-    .replace(/<button[^>]*>([\s\S]*?)<\/button>/gi,
-             `ElevatedButton(onPressed: () {}, child: Text("$1")),`)
-    // Inputs con name
-    .replace(/<input[^>]*name=["']([^"']*)["'][^>]*\/?>/gi,
-             `TextField(decoration: InputDecoration(labelText: "$1")),`)
-    // Inputs con placeholder
-    .replace(/<input[^>]*placeholder=["']([^"']*)["'][^>]*\/?>/gi,
-             `TextField(decoration: InputDecoration(hintText: "$1")),`)
-    // Cualquier otro <input>
-    .replace(/<input[^>]*\/?>/gi,
-             `TextField(),`)
-    // Saltos de línea
-    .replace(/<br\s*\/?>/gi,
-             `SizedBox(height: 10),`)
-    // Y finalmente, ya no debe quedar nada de HTML
-    .replace(/<[^>]+>/g, '') 
+    // Archivo lib/mi_widget.dart
+    // 🔥 CORREGIMOS: limpiamos markdown
+  const cleanCode = dartCode
+    .replace(/```dart/g, '')
+    .replace(/```/g, '')
     .trim();
-}
 
+  zip.file('flutter_project/lib/mi_widget.dart', cleanCode);
 
-  exportarProyectoFlutter() {
-  const zip = new JSZip();
-  // 🧱 Código Dart generado desde el editor
-  const widgetCode = this.generarFlutterDesdeEditor();
-
-  // 📄 Archivo: mi_widget.dart
-  const dartWidget = `
-import 'package:flutter/material.dart';
-
-class MiWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Interfaz Generada'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ${widgetCode}
-          ],
-        ),
-      ),
-    );
-  }
-}
-  `.trim();
-
-  // 📄 Archivo: main.dart
-  const mainDart = `
+    // Archivo lib/main.dart
+    zip.file('flutter_project/lib/main.dart', `
 import 'package:flutter/material.dart';
 import 'mi_widget.dart';
 
@@ -389,10 +349,10 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-  `.trim();
+    `.trim());
 
-  // 📄 Archivo: pubspec.yaml
-  const pubspec = `
+    // Archivo pubspec.yaml
+    zip.file('flutter_project/pubspec.yaml', `
 name: interfaz_flutter
 description: Interfaz generada automáticamente
 publish_to: 'none'
@@ -406,50 +366,23 @@ dependencies:
 
 flutter:
   uses-material-design: true
-  `.trim();
+    `.trim());
 
-  // 📁 Estructura del proyecto
-  zip.file('flutter_project/lib/mi_widget.dart', dartWidget);
-  zip.file('flutter_project/lib/main.dart', mainDart);
-  zip.file('flutter_project/pubspec.yaml', pubspec);
-  zip.file('flutter_project/README.md', '# Proyecto Flutter generado automáticamente');
-
-  // 📦 Generar ZIP y descargar
-  zip.generateAsync({ type: 'blob' }).then((content) => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(content);
-    a.download = 'flutter_project.zip';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-}
-
-
-/* ⇨ NUEVO: Exportar desde imagen */
-  onImagenChange(event: any) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e: any) => {
-      this.cargandoImagen = true;
-      this.mensajeImagen = 'Procesando imagen para diseño...';
-      try {
-        const base64 = e.target.result.split(',')[1];
-        // Se asume que geminiService.enviarImagen(base64) devuelve un HTML+CSS
-        const respuesta = await this.geminiService.enviarImagen(base64);
-        const { html, css } = this.extraerHtmlCss(respuesta);
-        this.editor.setComponents('');                   // Limpia lienzo
-        this.editor.addComponents(`<style>${css}</style>${html}`);
-        this.abrirModalExportar();                       // Abre modal Flutter
-      } catch (err) {
-        console.error('Error al procesar imagen:', err);
-      } finally {
-        this.cargandoImagen = false;
-        this.mensajeImagen = '';
-      }
-    };
-    reader.readAsDataURL(file);
+    // Generar y descargar ZIP
+    zip.generateAsync({ type: 'blob' }).then(content => {
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'flutter_project.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
   }
+
+
+
 
   /* ⇨ MODIFICADO: Exportar desde prompt */
 
@@ -596,5 +529,5 @@ Genera el HTML estructurado listo para GrapesJS (sin <html> ni <body>) y el CSS 
   cerrarModalXMI() {
     this.modalXmiAbierto = false;
   }
-  
+
 }
