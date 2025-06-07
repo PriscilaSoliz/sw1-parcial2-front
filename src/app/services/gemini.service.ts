@@ -35,5 +35,27 @@ export class GeminiService {
         );
         return response.candidates[0]?.content?.parts[0]?.text || '';
     }
+    /// esto puse para la imagen
+    enviarImagen(imagenBase64: string): Promise<string> {
+    const pregunta = `
+    Eres un generador de interfaces visuales móviles. Interpreta la imagen proporcionada y genera el HTML limpio (sin <html> ni <body>) con estilo CSS dentro de <style>. 
+    No expliques nada, responde solo con el código estructurado para GrapesJS.
+    `;
+
+  const body = {
+    contents: [{
+      parts: [
+        { text: pregunta },
+        { inlineData: { mimeType: 'image/png', data: imagenBase64.split(',')[1] } }
+      ]
+    }]
+  };
+
+  return firstValueFrom(
+    this.http.post(`${this.API_URL}?key=${this.API_KEY}`, body)
+  ).then((res: any) => res.candidates[0]?.content?.parts[0]?.text || '');
+}
+
+
 }
 

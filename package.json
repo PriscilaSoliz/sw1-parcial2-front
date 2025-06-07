@@ -20,6 +20,7 @@
     "@angular/router": "^17.3.0",
     "grapesjs": "^0.22.6",
     "grapesjs-preset-webpage": "^1.0.3",
+    "jszip": "^3.10.1",
     "jwt-decode": "^4.0.0",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4.8.1",

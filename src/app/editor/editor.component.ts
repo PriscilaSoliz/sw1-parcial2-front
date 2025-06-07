@@ -12,6 +12,7 @@ import { loadBlocks } from './blocks';
 import { GeminiService } from '../services/gemini.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import JSZip from 'jszip';
 
 @Component({
   selector: 'app-editor',
@@ -31,10 +32,20 @@ export class EditorComponent implements AfterViewInit {
   htmlExportado = '';
   cssExportado = '';
   tsExportado = '';
+  dartExportado = '';
   modalExportarAbierto = false;
   modalXmiAbierto = false;
-  cargandoGeminiXMI = false; // Spinner
+  cargandoGeminiXMI = false;
   mensajeGemini = '';
+
+  // ⇨ NUEVO: estados para exportar desde imagen
+  cargandoImagen = false;
+  mensajeImagen = '';
+
+  
+
+  // ⇨ VARIABLE USADA EN EL HTML
+cargando = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -227,49 +238,48 @@ export class EditorComponent implements AfterViewInit {
     }
   }
 
-  /* -------- 🛠 Exportar a Angular --------- */
+  /* -------- 🛠 Exportar a Flutter --------- */
 
   abrirModalExportar() {
-    this.htmlExportado = this.editor.getHtml();
-    this.cssExportado = this.editor.getCss();
+  const codigoFlutter = this.generarFlutterDesdeEditor(); // función que crea widgets desde HTML
 
-    const nombreComponente = 'mi-componente';
-    this.tsExportado = `
-      import { Component } from '@angular/core';
+  const nombreComponente = 'mi_widget';
+  this.dartExportado = `import 'package:flutter/material.dart';
 
-      @Component({
-        selector: 'app-${nombreComponente}',
-        templateUrl: './${nombreComponente}.component.html',
-        styleUrls: ['./${nombreComponente}.component.css']
-      })
-      export class ${this.pascalCase(nombreComponente)}Component {}
-    `.trim();
+    class ${this.pascalCase(nombreComponente)} extends StatelessWidget {
+      @override
+      Widget build(BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Interfaz Generada'),
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                ${codigoFlutter}
+              ],
+            ),
+          ),
+        );
+      }
+    }
+  `.trim();
 
-    this.modalExportarAbierto = true;
-  }
+  this.modalExportarAbierto = true;
+}
 
   cerrarModalExportar() {
     this.modalExportarAbierto = false;
   }
 
-  descargarArchivos() {
-    const nombreComponente = 'mi-componente';
+ descargarArchivos() {
+  const nombreComponente = 'mi_widget';
+  const dartBlob = new Blob([this.dartExportado], { type: 'text/plain' });
+  const dartUrl = URL.createObjectURL(dartBlob);
+  this.descargarArchivo(dartUrl, `${nombreComponente}.dart`);
+}
 
-    // HTML
-    const htmlBlob = new Blob([this.htmlExportado], { type: 'text/html' });
-    const htmlUrl = URL.createObjectURL(htmlBlob);
-    this.descargarArchivo(htmlUrl, `${nombreComponente}.component.html`);
-
-    // CSS
-    const cssBlob = new Blob([this.cssExportado], { type: 'text/css' });
-    const cssUrl = URL.createObjectURL(cssBlob);
-    this.descargarArchivo(cssUrl, `${nombreComponente}.component.css`);
-
-    // TS
-    const tsBlob = new Blob([this.tsExportado], { type: 'text/plain' });
-    const tsUrl = URL.createObjectURL(tsBlob);
-    this.descargarArchivo(tsUrl, `${nombreComponente}.component.ts`);
-  }
 
   private descargarArchivo(url: string, nombre: string) {
     const a = document.createElement('a');
@@ -285,6 +295,222 @@ export class EditorComponent implements AfterViewInit {
       .map(p => p.charAt(0).toUpperCase() + p.slice(1))
       .join('');
   }
+
+private generarFlutterDesdeEditor(): string {
+  let html = this.editor.getHtml();
+
+  // 1) Quitar fences Markdown
+  html = html
+    .replace(/```html\s*/gi, '')
+    .replace(/```/g, '');
+
+  // 2) Quitar <style>…</style> completo
+  html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+  // 4) Decodificar entidades básicas
+  html = html.replace(/&nbsp;/gi, ' ').trim();
+
+// 5) Ahora cada línea de texto (separado por tags) la convertimos a Widgets
+  //    Usaremos comillas dobles en Dart para evitar conflictos con apostrofes.
+  return html
+    // Encabezados
+    .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi,
+             `Text("$1", style: TextStyle(fontSize: 24)),`)
+    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi,
+             `Text("$1", style: TextStyle(fontSize: 20)),`)
+    // Párrafos y labels
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi,
+             `Text("$1"),`)
+    .replace(/<label[^>]*>([\s\S]*?)<\/label>/gi,
+             `Text("$1"),`)
+    // Botones
+    .replace(/<button[^>]*>([\s\S]*?)<\/button>/gi,
+             `ElevatedButton(onPressed: () {}, child: Text("$1")),`)
+    // Inputs con name
+    .replace(/<input[^>]*name=["']([^"']*)["'][^>]*\/?>/gi,
+             `TextField(decoration: InputDecoration(labelText: "$1")),`)
+    // Inputs con placeholder
+    .replace(/<input[^>]*placeholder=["']([^"']*)["'][^>]*\/?>/gi,
+             `TextField(decoration: InputDecoration(hintText: "$1")),`)
+    // Cualquier otro <input>
+    .replace(/<input[^>]*\/?>/gi,
+             `TextField(),`)
+    // Saltos de línea
+    .replace(/<br\s*\/?>/gi,
+             `SizedBox(height: 10),`)
+    // Y finalmente, ya no debe quedar nada de HTML
+    .replace(/<[^>]+>/g, '') 
+    .trim();
+}
+
+
+  exportarProyectoFlutter() {
+  const zip = new JSZip();
+  // 🧱 Código Dart generado desde el editor
+  const widgetCode = this.generarFlutterDesdeEditor();
+
+  // 📄 Archivo: mi_widget.dart
+  const dartWidget = `
+import 'package:flutter/material.dart';
+
+class MiWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Interfaz Generada'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            ${widgetCode}
+          ],
+        ),
+      ),
+    );
+  }
+}
+  `.trim();
+
+  // 📄 Archivo: main.dart
+  const mainDart = `
+import 'package:flutter/material.dart';
+import 'mi_widget.dart';
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Interfaz Generada',
+      home: MiWidget(),
+    );
+  }
+}
+  `.trim();
+
+  // 📄 Archivo: pubspec.yaml
+  const pubspec = `
+name: interfaz_flutter
+description: Interfaz generada automáticamente
+publish_to: 'none'
+
+environment:
+  sdk: '>=2.17.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  `.trim();
+
+  // 📁 Estructura del proyecto
+  zip.file('flutter_project/lib/mi_widget.dart', dartWidget);
+  zip.file('flutter_project/lib/main.dart', mainDart);
+  zip.file('flutter_project/pubspec.yaml', pubspec);
+  zip.file('flutter_project/README.md', '# Proyecto Flutter generado automáticamente');
+
+  // 📦 Generar ZIP y descargar
+  zip.generateAsync({ type: 'blob' }).then((content) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = 'flutter_project.zip';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+
+/* ⇨ NUEVO: Exportar desde imagen */
+  onImagenChange(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e: any) => {
+      this.cargandoImagen = true;
+      this.mensajeImagen = 'Procesando imagen para diseño...';
+      try {
+        const base64 = e.target.result.split(',')[1];
+        // Se asume que geminiService.enviarImagen(base64) devuelve un HTML+CSS
+        const respuesta = await this.geminiService.enviarImagen(base64);
+        const { html, css } = this.extraerHtmlCss(respuesta);
+        this.editor.setComponents('');                   // Limpia lienzo
+        this.editor.addComponents(`<style>${css}</style>${html}`);
+        this.abrirModalExportar();                       // Abre modal Flutter
+      } catch (err) {
+        console.error('Error al procesar imagen:', err);
+      } finally {
+        this.cargandoImagen = false;
+        this.mensajeImagen = '';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ⇨ MODIFICADO: Exportar desde prompt */
+
+    //PROMT
+  cargandoPrompt = false;
+  mostrarPrompt = false;
+  prompt = ''; 
+
+  abrirModalPrompt() {
+    this.mostrarPrompt = true;
+  }
+
+  enviarPrompt() {
+    if (!this.prompt.trim()) return;
+    this.cargandoPrompt = true;
+    const API_KEY ='AIzaSyDSZmAJIE17Ei-QATNIPXHyFM3Rm9RSDBE';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+
+      const body = {
+      contents: [
+        {
+          parts: [
+            {
+              text: `
+Eres un generador de interfaces visuales solo para vistas moviles. A partir de la siguiente petición en lenguaje natural:
+
+"${this.prompt}"
+
+Genera el HTML estructurado listo para GrapesJS (sin <html> ni <body>) y el CSS dentro de una etiqueta <style>. Importante:
+- Los formularios deben usar <form>.
+- Los botones deben ser <button type="submit">Guardar</button>.
+- Cada <input> debe tener un atributo name correspondiente.
+- No expliques nada, solo responde con el código HTML y CSS limpio directamente.
+`
+            }
+          ]
+        }
+      ]
+    };
+
+    this.http.post<any>(url, body).subscribe({
+      next: (res) => {
+        const respuesta = res?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        this.editor.setComponents('');              // Limpia lienzo
+        this.editor.addComponents(respuesta);       // Añade resultado
+        this.abrirModalExportar();                  // Abre modal Flutter
+        this.cargandoPrompt = false;
+        this.cerrarModalPrompt();
+      },
+      error: (err) => {
+        console.error('Error al enviar prompt:', err);
+        this.cargandoPrompt = false;
+      }
+    });
+  }
+
+  cerrarModalPrompt() {
+    this.mostrarPrompt = false;
+    this.prompt = '';
+  }
+
 
   /*---------EXPORTAR A XMI O XML */
   procesarXMI(event: any) {
@@ -370,71 +596,5 @@ export class EditorComponent implements AfterViewInit {
   cerrarModalXMI() {
     this.modalXmiAbierto = false;
   }
-
-  //PROMT
-  cargando = false;
-  mostrarPrompt = false;
-  prompt = '';
-
-  abrirModalPrompt() {
-    this.mostrarPrompt = true;
-  }
-
-  enviarPrompt() {
-    if (!this.prompt.trim()) return;
-
-    this.cargando = true;
-
-    const API_KEY = 'AIzaSyDSZmAJIE17Ei-QATNIPXHyFM3Rm9RSDBE';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
-
-    const body = {
-      contents: [
-        {
-          parts: [
-            {
-              text: `
-Eres un generador de interfaces visuales solo para vistas moviles. A partir de la siguiente petición en lenguaje natural:
-
-"${this.prompt}"
-
-Genera el HTML estructurado listo para GrapesJS (sin <html> ni <body>) y el CSS dentro de una etiqueta <style>. Importante:
-- Los formularios deben usar <form>.
-- Los botones deben ser <button type="submit">Guardar</button>.
-- Cada <input> debe tener un atributo name correspondiente.
-- No expliques nada, solo responde con el código HTML y CSS limpio directamente.
-`
-            }
-          ]
-        }
-      ]
-    };
-
-    this.http.post<any>(url, body).subscribe({
-      next: (res) => {
-        const respuesta = res?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const editor = (window as any).grapesEditorInstance;
-
-        if (editor) {
-          editor.setComponents(''); // Limpia el lienzo
-          editor.addComponents(respuesta); // Inserta el resultado
-        } else {
-          console.error('Editor GrapesJS no encontrado.');
-        }
-
-        this.cargando = false;
-        this.cerrarModalPrompt();
-      },
-      error: (err) => {
-        console.error('Error al enviar prompt a Gemini:', err);
-        this.cargando = false;
-      }
-    });
-  }
-
-  cerrarModalPrompt() {
-    this.mostrarPrompt = false;
-    this.prompt = '';
-  }
-
+  
 }
