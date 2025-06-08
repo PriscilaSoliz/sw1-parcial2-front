@@ -59,10 +59,12 @@ export class ChatGeminiComponent {
       return;
     }
     this.cargando = true;
-    const prompt = `
-    Analiza esta imagen. Devuélveme únicamente el HTML estructurado para GrapesJS (sin etiquetas <html> ni <body>) 
+    const prompt =  /** `Analiza esta imagen. Devuélveme únicamente el HTML estructurado para GrapesJS (sin etiquetas <html> ni <body>) 
     y el CSS dentro de una etiqueta <style>. No expliques nada, responde solo el contenido listo para usar.
-    `;
+    `**/ `Analiza esta imagen. Devuélveme únicamente el HTML estructurado para GrapesJS (sin etiquetas <html> ni <body>) 
+    y el CSS dentro de una etiqueta <style>. Asegúrate de que el diseño esté completamente adaptado para dispositivos móviles 
+    (vista celular), utilizando una estructura vertical, elementos táctiles grandes y diseño responsive. No expliques nada, responde solo 
+    el contenido listo para usar.`;
     
     const imagenBase64 = await this.convertirImagenBase64(this.imagen);
   

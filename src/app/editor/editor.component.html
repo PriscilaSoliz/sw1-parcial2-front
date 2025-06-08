@@ -5,7 +5,7 @@
     <button (click)="abrirModalGemini()">🖼️ Generar desde Imagen</button>
     <!--<button (click)="abrirModalSql()">🛠️ Generar desde SQL</button>--> 
     <!--<button (click)="abrirModalExportar()">📦 Exportar Angular</button>--> 
-    <button (click)="abrirModalXMI()">🗂️ Subir Diagrama XMI</button>
+    <!--<button (click)="abrirModalXMI()">🗂️ Subir Diagrama XMI</button>--> 
     <button (click)="abrirModalPrompt()">💡 Escribir Prompt</button>
     <!-- 📦 Botón para exportar el proyecto Flutter completo -->
     <button (click)="exportarFlutterDesdeEditor()">📦 Exportar Proyecto Flutter</button> <!--puse el botton de exportar flutter--> 
@@ -26,7 +26,7 @@
 <app-chat-gemini *ngIf="editor" [editor]="editor"></app-chat-gemini>
 <app-sql-generate *ngIf="editor"></app-sql-generate>
 
-<div class="modal-exportar" *ngIf="modalExportarAbierto">
+<!--<div class="modal-exportar" *ngIf="modalExportarAbierto">
     <div class="modal-content-exportar">
         <h2>📦 Exportar Angular</h2>
     
@@ -44,16 +44,34 @@
             <button (click)="cerrarModalExportar()">❌ Cerrar</button>
         </div>
     </div>
-</div> 
+</div> -->
 
-<!-- ⇨ MODIFICADO: modal de exportación ahora muestra Dart -->
-<div class="modal-exportar" *ngIf="modalExportarAbierto">
-  <div class="modal-content-exportar">
-    <h2>📦 Código Flutter Generado</h2>
-    <textarea readonly rows="15" style="width:100%">{{ dartExportado }}</textarea>
-    <div class="botones-modal">
-      <button (click)="descargarArchivos()">⬇️ Descargar mi_widget.dart</button>
-      <button (click)="cerrarModalExportar()">❌ Cerrar</button>
+<!--<div class="xmi-modal-backdrop" *ngIf="modalXmiAbierto">
+    <div class="xmi-modal">
+        <h2>🗂️ Subir Diagrama XMI</h2>
+        <input type="file" (change)="procesarXMI($event)" accept=".xmi,.xml">
+        <div class="modal-buttons">
+            <button (click)="cerrarModalXMI()">❌ Cancelar</button>
+        </div>
+        <div *ngIf="cargandoGeminiXMI">⏳ Procesando XMI con Gemini...</div>
+        <div *ngIf="mensajeGemini">{{ mensajeGemini }}</div>
+    </div>
+</div>-->
+
+<div class="modal-prompt" *ngIf="mostrarPrompt">
+  <div class="modal-content">
+    <h3>🧠 Escribir Prompt para la IA</h3>
+
+    <!-- Mostrar "Cargando..." mientras se espera respuesta -->
+    <div *ngIf="cargando" style="margin-bottom: 10px; color: #3498db; font-weight: bold;">
+      ⏳ Cargando respuesta de la IA...
+    </div>
+
+    <textarea [(ngModel)]="prompt" rows="6" placeholder="Escribe tu idea..." [disabled]="cargando"></textarea>
+
+    <div class="modal-actions">
+      <button (click)="enviarPrompt()" [disabled]="cargando">Enviar</button>
+      <button (click)="cerrarModalPrompt()" [disabled]="cargando">Cancelar</button>
     </div>
   </div>
 </div>
@@ -82,45 +100,4 @@
   </div>
 </div>
 
-<!-- ⇨ MODIFICADO: modal de exportación ahora muestra Dart -->
-<div class="modal-exportar" *ngIf="modalExportarAbierto">
-  <div class="modal-content-exportar">
-    <h2>📦 Código Flutter Generado</h2>
-    <textarea readonly rows="15" style="width:100%">{{ dartExportado }}</textarea>
-    <div class="botones-modal">
-      <button (click)="descargarArchivos()">⬇️ Descargar mi_widget.dart</button>
-      <button (click)="cerrarModalExportar()">❌ Cerrar</button>
-    </div>
-  </div>
-</div>
 
-
-<div class="xmi-modal-backdrop" *ngIf="modalXmiAbierto">
-    <div class="xmi-modal">
-        <h2>🗂️ Subir Diagrama XMI</h2>
-        <input type="file" (change)="procesarXMI($event)" accept=".xmi,.xml">
-        <div class="modal-buttons">
-            <button (click)="cerrarModalXMI()">❌ Cancelar</button>
-        </div>
-        <div *ngIf="cargandoGeminiXMI">⏳ Procesando XMI con Gemini...</div>
-        <div *ngIf="mensajeGemini">{{ mensajeGemini }}</div>
-    </div>
-</div>
-
-<div class="modal-prompt" *ngIf="mostrarPrompt">
-  <div class="modal-content">
-    <h3>🧠 Escribir Prompt para la IA</h3>
-
-    <!-- Mostrar "Cargando..." mientras se espera respuesta -->
-    <div *ngIf="cargando" style="margin-bottom: 10px; color: #3498db; font-weight: bold;">
-      ⏳ Cargando respuesta de la IA...
-    </div>
-
-    <textarea [(ngModel)]="prompt" rows="6" placeholder="Escribe tu idea..." [disabled]="cargando"></textarea>
-
-    <div class="modal-actions">
-      <button (click)="enviarPrompt()" [disabled]="cargando">Enviar</button>
-      <button (click)="cerrarModalPrompt()" [disabled]="cargando">Cancelar</button>
-    </div>
-  </div>
-</div>

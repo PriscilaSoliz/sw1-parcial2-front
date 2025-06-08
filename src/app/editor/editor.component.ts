@@ -274,7 +274,6 @@ descargarArchivos() {
 }
 
 
-
  /* ====== EXPORTACIÓN A ZIP DE PROYECTO FLUTTER ===// ⇨ NUEVO: genera Flutter desde el HTML actual del editor=== */
 
   /** 1) Desde el HTML actual del editor */
@@ -325,7 +324,7 @@ descargarArchivos() {
     const zip = new JSZip();
 
     // Archivo lib/mi_widget.dart
-    // 🔥 CORREGIMOS: limpiamos markdown
+    //  CORREGIMOS: limpiamos markdown
   const cleanCode = dartCode
     .replace(/```dart/g, '')
     .replace(/```/g, '')
@@ -369,7 +368,7 @@ flutter:
     `.trim());
 
     // Generar y descargar ZIP
-    zip.generateAsync({ type: 'blob' }).then(content => {
+    zip.generateAsync({ type: 'blob' }).then((content: Blob) => {
       const url = URL.createObjectURL(content);
       const a = document.createElement('a');
       a.href = url;
@@ -380,9 +379,6 @@ flutter:
       URL.revokeObjectURL(url);
     });
   }
-
-
-
 
   /* ⇨ MODIFICADO: Exportar desde prompt */
 
@@ -500,7 +496,7 @@ Genera el HTML estructurado listo para GrapesJS (sin <html> ni <body>) y el CSS 
         col.getAttribute('name')
       );
   
-      // Crear bloque visual simulado (ajústalo a tu editor específico)
+      // Crear bloque visual simulado 
       const html = `
         <div class="tabla-sql">
           <h3>${nombreTabla}</h3>
