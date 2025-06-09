@@ -67,7 +67,7 @@
       ⏳ Cargando respuesta de la IA...
     </div>
 
-    <textarea [(ngModel)]="prompt" rows="6" placeholder="Escribe tu idea..." [disabled]="cargando"></textarea>
+    <textarea [(ngModel)]="prompt" rows="6" placeholder="Escribe tu idea..." [disabled]="cargandoPrompt"></textarea>
 
     <div class="modal-actions">
       <button (click)="enviarPrompt()" [disabled]="cargando">Enviar</button>
