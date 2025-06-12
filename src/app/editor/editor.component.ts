@@ -85,12 +85,14 @@ cargando = false;
         selectorManager: { appendTo: '#selectors' },
         deviceManager: {
           devices: [
-            { name: 'Desktop', width: '' },
-            { name: 'Tablet', width: '768px' },
+            //{ name: 'Desktop', width: '' },
+            //{ name: 'Tablet', width: '768px' },
             { name: 'Mobile', width: '375px' },
           ],
         },
       });
+
+      this.editor.setDevice('Mobile'); //movil
 
       loadBlocks(this.editor.BlockManager);
       (window as any).grapesEditorInstance = this.editor;
@@ -110,7 +112,7 @@ cargando = false;
         this.enviarEliminacion(model);
       });
   
-      // 🔵 Escuchar cambios remotos
+      //  Escuchar cambios remotos
       this.webSocketService.escucharContenido((cambio: any) => {
         if (!cambio) return;
         if (cambio.tipo === 'update') {

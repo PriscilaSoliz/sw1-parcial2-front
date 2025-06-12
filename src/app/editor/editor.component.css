@@ -1,18 +1,18 @@
-    /* 🎨 ESTRUCTURA PRINCIPAL */
+    /*  ESTRUCTURA PRINCIPAL */
     .editor-wrapper {
         display: flex;
-        height: 100vh;
-        background: #f5f6fa;
+        height: 106.5vh;
+        background: #575656;
     }
     
-    /* 🧱 PANEL IZQUIERDO (Blocks) */
+    /*  PANEL IZQUIERDO (Blocks) */
     #blocks {
         width: 260px;
-        background: #2c3e50;
+        background: #575656;
         color: white;
         overflow-y: auto;
         padding: 10px;
-        border-right: 2px solid #34495e;
+        border-right: 2px solid #575656;
     }
     
     #blocks .gjs-block {
@@ -28,49 +28,53 @@
         background: #1abc9c;
     }
     
-    /* 🧩 CANVAS CENTRAL (GrapesJS) */
+    /*  CANVAS CENTRAL (GrapesJS) */
     .main-canvas {
         flex: 1;
         background: white;
         overflow: auto;
         padding: 20px;
-        border-left: 2px solid #ddd;
-        border-right: 2px solid #ddd;
+        border-left: 2px solid #575656;
+        border-right: 2px solid #575656;
     }
+
     
-    /* ⚙️ PANEL DERECHO (Estilos y Capas) */
+    /*  PANEL DERECHO (Estilos y Capas) */
     .panel-side {
         width: 320px;
-        background: #ecf0f1;
+        background: #575656;
         overflow-y: auto;
         padding: 10px;
     }
     
+    /*BORDE DE LOS BOTONES DE LA DERECHA*/
     .panel {
         margin-bottom: 20px;
-        background: white;
+        background: #cac9c9;
         border-radius: 8px;
         padding: 10px;
         box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
     
-    /* 🎯 SUBPANELES */
+    /*  SUBPANELES */
     #layers, #styles, #traits, #selectors {
         margin-bottom: 15px;
     }
     
-    /* 🛠️ BARRA SUPERIOR (Botones de acción) */
+    /*  BARRA SUPERIOR (Botones de acción) */
     .toolbar {
-        background-color: #3498db;
+        background-color: #575656;
         color: white;
         padding: 10px;
         display: flex;
         gap: 10px;
+
+        justify-content: center; /*PARA CENTRAR LOS BOTONES EN EL CENTRO*/
     }
-    
+    /*BOTONES DE ARRIBA*/
     .toolbar button {
         background: white;
-        color: #3498db;
+        color: #080000;
         border: none;
         padding: 8px 16px;
         border-radius: 6px;
@@ -78,19 +82,19 @@
         cursor: pointer;
         transition: background 0.2s, color 0.2s;
     }
-    
+    /*BOTON CUANDO UNO ACERCA EL MAUSE*/
     .toolbar button:hover {
-        background: #2980b9;
-        color: white;
+        background: #cac9c9;
+        color: rgb(8, 0, 0);
     }
     
-    /* 🖥️ AJUSTES DEL CANVAS */
+    /*  AJUSTES DEL CANVAS */
     #gjs {
         min-height: calc(100vh - 50px);
-        background: white;
+        background: #575656;
     }
     
-    /* 🛡️ SCROLL CUSTOM */
+    /*  SCROLL CUSTOM */
     ::-webkit-scrollbar {
         width: 8px;
     }

@@ -44,7 +44,7 @@
     }
     
     .upload-label {
-        background-color: #3498db;
+        background-color: #575656;
         color: white;
         padding: 12px 20px;
         margin-top: 20px;
@@ -84,7 +84,7 @@
     }
     
     .btn-enviar {
-        background-color: #2ecc71;
+        background-color: #575656;
         color: white;
     }
     
@@ -93,7 +93,7 @@
     }
     
     .btn-enviar:hover {
-        background-color: #27ae60;
+        background-color: #3498db;
     }
     
     .spinner {
