@@ -19,7 +19,7 @@ export class AuthService {
   }
 
   register(userData: { name: string, email: string, password: string }) {
-    return this.http.post<any>('http://localhost:3000/api/register', userData);
+    return this.http.post<any>('https://sw1-parcial2-back.onrender.com/api/register', userData);
   }
   
   getToken() {
