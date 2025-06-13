@@ -7,14 +7,14 @@ import { inject } from '@angular/core';
     providedIn: 'root'
 })
 export class SalaService {
-    private apiUrl = 'http://localhost:3000/api/salas';
+    private apiUrl = 'https://sw1-parcial2-back.onrender.com/api/salas';
 
     private http = inject(HttpClient);
 
     // 🔵 Crear sala
     crearSala(nombre: string, descripcion: string) {
         const token = localStorage.getItem('token'); // 👈 el token que guardaste al loguear
-        return this.http.post('http://localhost:3000/api/salas', { nombre, descripcion }, {
+        return this.http.post('https://sw1-parcial2-back.onrender.com/api/salas', { nombre, descripcion }, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -62,11 +62,11 @@ export class SalaService {
     }
 
     buscarUsuarios(texto: string) {
-        return this.http.get<any[]>(`http://localhost:3000/api/usuarios?search=${texto}`);
+        return this.http.get<any[]>(`https://sw1-parcial2-back.onrender.com/api/usuarios?search=${texto}`);
     }
 
     obtenerMisSalas() {
-        return this.http.get<any[]>('http://localhost:3000/api/mis-salas', {
+        return this.http.get<any[]>('https://sw1-parcial2-back.onrender.com/api/mis-salas', {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`
             }
