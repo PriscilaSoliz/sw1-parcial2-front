@@ -14,6 +14,9 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import JSZip from 'jszip';
 
+import { SpeechService } from '../services/speech.service';
+
+
 @Component({
   selector: 'app-editor',
   standalone: true,
@@ -46,6 +49,11 @@ export class EditorComponent implements AfterViewInit {
 
   promptText='';
 
+  //variable para voz
+  speechText: string = ''; 
+  escuchando = false;
+
+
   // ⇨ VARIABLE USADA EN EL HTML
 cargando = false;
 
@@ -54,7 +62,8 @@ cargando = false;
     private salaService: SalaService,
     private webSocketService: WebSocketService,
     private geminiService: GeminiService,
-    private http: HttpClient
+    private http: HttpClient,
+    private speechService: SpeechService//para voz
   ) {}
 
   ngAfterViewInit(): void {
@@ -528,4 +537,38 @@ Genera el HTML estructurado listo para GrapesJS (sin <html> ni <body>) y el CSS 
     this.modalXmiAbierto = false;
   }
 
+  //METODO ESCUCHAR Y ENVIAR A GEMINI MEDIANTE EL PROMT QUE YA TENGO
+  usarVozComoPrompt() {
+    this.speechService.start();
+    setTimeout(() => {
+      this.speechService.stop();
+      this.speechText = this.speechService.getTranscript();
+      console.log('🗣 Texto reconocido:', this.speechText);
+
+      if (this.speechText.trim()) {
+        this.prompt = this.speechText;
+        this.enviarPrompt(); // método ya existente
+      }
+    }, 5000);
+  }
+
+  iniciarVoz() {
+    this.speechText = '';
+    this.escuchando = true;
+    this.speechService.start();
+  };
+
+  detenerVoz() {
+    this.escuchando = false;
+    this.speechService.stop();
+    this.speechText = this.speechService.getTranscript();
+    this.usarPromptReconocido();
+    console.log('🎙️ Voz capturada:', this.speechText);
+  };
+
+  usarPromptReconocido() {
+    if (this.speechText.trim()) {
+      this.prompt = this.speechText;
+    }
+  }
 }

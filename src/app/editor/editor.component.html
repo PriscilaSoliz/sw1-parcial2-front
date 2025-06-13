@@ -60,6 +60,14 @@
 
 <div class="modal-prompt" *ngIf="mostrarPrompt">
   <div class="modal-content">
+
+     <!-- 🎙️ Botones de control de voz -->
+    <div style="margin-bottom: 10px;">
+      <button (click)="iniciarVoz()" [disabled]="cargandoPrompt || escuchando">🎤 Iniciar Voz</button>
+      <button (click)="detenerVoz()" [disabled]="!escuchando || cargandoPrompt">🛑 Detener Voz</button>
+      <!--<button (click)="usarPromptReconocido()" [disabled]="!speechText">➡️ Usar Texto</button>-->
+    </div>
+
     <h3>🧠 Escribir Prompt para la IA</h3>
 
     <!-- Mostrar "Cargando..." mientras se espera respuesta -->
